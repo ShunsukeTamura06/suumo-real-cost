@@ -194,7 +194,7 @@
   function createOverlay(realCost, data) {
     if (document.getElementById('suumo-real-cost-overlay')) return;
 
-    const FORMS_URL = 'https://forms.google.com/PLACEHOLDER'; // 後でURLを差し替えてください
+    const FORMS_URL = 'https://docs.google.com/forms/d/e/1FAIpQLSc2Id15Y_dls5Ds0krI6g9lFUS9qBL6EaqsSHsbXSHMP3t8WQ/viewform';
 
     const overlay = document.createElement('div');
     overlay.id = 'suumo-real-cost-overlay';
