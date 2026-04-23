@@ -3,11 +3,25 @@
   'use strict';
 
   // ================================================================
-  // DOM からラベルに対応する値テキストを取得
-  // 複数のHTML構造(th/td, dt/dd, div.property_data系)に対応
+  // Strategy A: "ラベル: 金額" 形式のspan (property_view_note-list内)
+  // 例: "管理費・共益費: -", "敷金: 29.8万円", "礼金: 29.8万円"
   // ================================================================
-  function getTextByLabel(labelText) {
-    // Strategy 1: <th> -> <td>
+  function getValueFromLabeledSpan(labelPrefix) {
+    const spans = document.querySelectorAll('.property_view_note-list span, .property_view_note-info span');
+    for (const span of spans) {
+      const text = span.textContent.trim();
+      if (text.startsWith(labelPrefix)) {
+        const colonIdx = text.indexOf(':');
+        if (colonIdx !== -1) return text.slice(colonIdx + 1).trim();
+      }
+    }
+    return null;
+  }
+
+  // ================================================================
+  // Strategy B: th/td テーブル構造
+  // ================================================================
+  function getTextByThLabel(labelText) {
     const ths = document.querySelectorAll('th');
     for (const th of ths) {
       if (th.textContent.trim().includes(labelText)) {
@@ -20,8 +34,13 @@
         }
       }
     }
+    return null;
+  }
 
-    // Strategy 2: <dt> -> <dd>
+  // ================================================================
+  // Strategy C: dt/dd 構造
+  // ================================================================
+  function getTextByDtLabel(labelText) {
     const dts = document.querySelectorAll('dt');
     for (const dt of dts) {
       if (dt.textContent.trim().includes(labelText)) {
@@ -29,12 +48,17 @@
         if (dd && dd.tagName === 'DD') return dd.textContent.trim();
       }
     }
+    return null;
+  }
 
-    // Strategy 3: div[class*="property_data-title"] / div[class*="bukken-detail-title"]
-    const titleEls = document.querySelectorAll(
+  // ================================================================
+  // Strategy D: property_data-title / property_data-body div構造
+  // ================================================================
+  function getTextByDivLabel(labelText) {
+    const els = document.querySelectorAll(
       '[class*="property_data-title"],[class*="bukken_detail-title"],[class*="detail-title"]'
     );
-    for (const el of titleEls) {
+    for (const el of els) {
       if (el.textContent.trim().includes(labelText)) {
         const body =
           el.nextElementSibling ||
@@ -42,7 +66,6 @@
         if (body) return body.textContent.trim();
       }
     }
-
     return null;
   }
 
@@ -76,29 +99,48 @@
   }
 
   // ================================================================
-  // 家賃(賃料)取得 — 複数セレクタをフォールバックしながら検索
+  // 家賃(賃料)取得
   // ================================================================
   function getRent() {
-    const RENT_SELECTORS = [
-      '.property_view_main-title',
-      '.property_unit-price',
-      '[class*="price--main"]',
-      '[class*="pricemain"]',
-      '[class*="cassetteitem_price-main"]',
-    ];
-    for (const sel of RENT_SELECTORS) {
+    // 最優先: span.property_view_note-emphasis (実際のSUUMO詳細ページ)
+    const emphEl = document.querySelector('.property_view_note-emphasis');
+    if (emphEl) {
+      const v = parseAmount(emphEl.textContent);
+      if (v > 0) return v;
+    }
+
+    // 追加セレクタ
+    for (const sel of ['.property_view_main-title', '.property_unit-price',
+                        '[class*="price--main"]', '[class*="pricemain"]']) {
       const el = document.querySelector(sel);
       if (!el) continue;
       const v = parseAmount(el.textContent);
       if (v > 0) return v;
     }
-    // th "賃料" -> td
-    const fromLabel = getTextByLabel('賃料');
-    if (fromLabel) {
-      const v = parseAmount(fromLabel);
-      if (v > 0) return v;
+
+    // テーブル / DL からフォールバック
+    for (const label of ['賃料', '家賃']) {
+      const txt = getTextByThLabel(label) || getTextByDtLabel(label) || getTextByDivLabel(label);
+      if (txt) {
+        const v = parseAmount(txt);
+        if (v > 0) return v;
+      }
     }
     return 0;
+  }
+
+  // ================================================================
+  // ラベル付きspan → 値テキストを取得 (全戦略を試す)
+  // ================================================================
+  function getFieldText(spanLabelPrefix, tableLabel) {
+    // Strategy A: "ラベル: 値" span
+    const fromSpan = getValueFromLabeledSpan(spanLabelPrefix);
+    if (fromSpan !== null) return fromSpan;
+    // Strategy B/C/D: テーブル・DL・div
+    return getTextByThLabel(tableLabel)
+        || getTextByDtLabel(tableLabel)
+        || getTextByDivLabel(tableLabel)
+        || null;
   }
 
   // ================================================================
@@ -108,12 +150,12 @@
     const rent = getRent();
     if (!rent) return null;
 
-    const mgmt = parseAmount(getTextByLabel('管理費'), rent);
-    const deposit = parseAmount(getTextByLabel('敷金'), rent);
-    const keyMoney = parseAmount(getTextByLabel('礼金'), rent);
+    const mgmt    = parseAmount(getFieldText('管理費', '管理費'), rent);
+    const deposit = parseAmount(getFieldText('敷金', '敷金'), rent);
+    const keyMoney= parseAmount(getFieldText('礼金', '礼金'), rent);
 
-    // 仲介手数料の表示確認(値は使わず、存在確認のみ)
-    const agencyText = getTextByLabel('仲介手数料');
+    // 仲介手数料の表示確認(値は使わず存在確認のみ)
+    const agencyText = getFieldText('仲介手数料', '仲介手数料');
 
     return { rent, mgmt, deposit, keyMoney, agencyText };
   }
@@ -175,10 +217,10 @@
 
     document.body.appendChild(overlay);
 
-    // ホバー計測
+    // ホバー計測 (1ページ1カウント)
     overlay.addEventListener('mouseenter', function onHover() {
       incrementStat('hoverCount');
-      overlay.removeEventListener('mouseenter', onHover); // 1ページ1カウント
+      overlay.removeEventListener('mouseenter', onHover);
     });
 
     // 👍 ボタン
