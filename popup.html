@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <title>SUUMO 実質月額コスト</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="popup-header">
+    <span class="popup-title">閲覧履歴</span>
+    <button id="clearAll" class="clear-btn">全件削除</button>
+  </div>
+
+  <div class="sort-bar">
+    <span class="sort-label">並び順:</span>
+    <button class="sort-btn active" data-sort="visitedAt">訪問日</button>
+    <button class="sort-btn" data-sort="realCost">実質月額</button>
+    <button class="sort-btn" data-sort="rent">家賃</button>
+  </div>
+
+  <div id="list"></div>
+
+  <p id="empty" class="empty" style="display:none">
+    まだ履歴がありません<br>
+    <small>SUUMOの物件詳細ページを開くと自動で保存されます</small>
+  </p>
+
+  <div class="popup-footer">
+    <span id="stats"></span>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>
