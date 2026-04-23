@@ -10,14 +10,14 @@
   box-shadow: 0 4px 24px rgba(0, 0, 0, 0.18);
   font-family: -apple-system, BlinkMacSystemFont, 'Hiragino Sans', 'Yu Gothic UI',
     'Meiryo', sans-serif;
-  min-width: 190px;
+  min-width: 200px;
   text-align: center;
-  transition: opacity 0.2s ease;
   line-height: 1.4;
+  transition: min-width 0.15s;
 }
 
-#suumo-real-cost-overlay:hover {
-  opacity: 0.97;
+#suumo-real-cost-overlay:has(details[open]) {
+  min-width: 260px;
 }
 
 #suumo-real-cost-overlay p {
@@ -40,12 +40,79 @@
   letter-spacing: -0.01em;
 }
 
-#suumo-real-cost-overlay .src-detail {
+#suumo-real-cost-overlay .src-rent-line {
   font-size: 11px;
   color: #666;
-  margin-bottom: 3px;
+  margin-bottom: 6px;
 }
 
+/* 内訳パネル */
+#suumo-real-cost-overlay .src-breakdown-wrap {
+  margin-bottom: 6px;
+  text-align: left;
+}
+
+#suumo-real-cost-overlay .src-breakdown-wrap summary {
+  font-size: 11px;
+  color: #e84c1e;
+  cursor: pointer;
+  user-select: none;
+  text-align: center;
+  padding: 2px 0 4px;
+  list-style: none;
+  outline: none;
+}
+
+#suumo-real-cost-overlay .src-breakdown-wrap summary::after {
+  content: ' ▾';
+}
+
+#suumo-real-cost-overlay .src-breakdown-wrap[open] summary::after {
+  content: ' ▴';
+}
+
+#suumo-real-cost-overlay .src-breakdown-wrap summary:hover {
+  opacity: 0.75;
+}
+
+#suumo-real-cost-overlay .src-breakdown {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 11px;
+  margin-top: 6px;
+}
+
+#suumo-real-cost-overlay .src-breakdown td {
+  padding: 3px 2px;
+  color: #555;
+  vertical-align: middle;
+}
+
+#suumo-real-cost-overlay .src-breakdown td:last-child {
+  text-align: right;
+  white-space: nowrap;
+}
+
+#suumo-real-cost-overlay .src-br-sub td {
+  color: #888;
+  border-top: 1px solid #eee;
+  padding-top: 6px;
+}
+
+#suumo-real-cost-overlay .src-br-total td {
+  border-top: 1px solid #ccc;
+  font-weight: 600;
+  padding-top: 6px;
+  color: #333;
+}
+
+#suumo-real-cost-overlay .src-br-result td {
+  color: #e84c1e;
+  font-weight: 700;
+  font-size: 12px;
+}
+
+/* フッター */
 #suumo-real-cost-overlay .src-note {
   font-size: 10px;
   color: #aaa;
